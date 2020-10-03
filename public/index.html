@@ -3,12 +3,24 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
     <title>Document</title>
 </head>
 <body>
     <h1>todo List</h1>
-    <!-- <ul id="todoList"></ul> -->
+    <ul id="todoList"></ul>
+
+    <form action="/api/todos" method="post" id="form">
+        <lable for="id">id</lable>
+        <input type="text" name="id" id="id">
+        <lable for="todo">todo</lable>
+        <input type="text" name="todo" id="todo">
+        
+        <input type="submit" id="submit">
+    </form>
 
     <script src="script.js"></script>
+    
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
 </body>
 </html>

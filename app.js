@@ -1,20 +1,24 @@
 const http = require('http');
 const express = require('express');
 const bodyParser = require('body-parser');
+const methodOverride = require("method-override")
+
+const app = express();
+const server = http.createServer(app)
+
+const es6Renderer = require('express-es6-template-engine');
+app.engine('html', es6Renderer);
+app.set('views', 'templates');
+app.set('view engine', 'html');
 
 const hostname = '127.0.0.1'; 
 const port = 3000; 
 
-
-
-const app = express();
-
-const server = http.createServer(app)
-
+app.use(methodOverride("_method"))
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 
-app.use(express.static('./public'));
+app.use(express.static('public'));
 
 const todoList = [
   {
@@ -27,7 +31,7 @@ const todoList = [
   },
   {
     id: 3,
-    todo: '???',
+    todo: 'Review',
   },
   {
     id: 4,
@@ -35,9 +39,112 @@ const todoList = [
   },
 ];
 
+
+
 app.get("/", (req, res)=>{
-  res.send("hello")
+  res.render(`home`, {
+    locals: {
+      title: "Todo app"
+    },
+    partials: {
+      head: "/partials/head"
+    }
+  })
 })
+
+
+//todoList.html rendering
+app.get("/todos", (req, res)=>{
+  res.render("todoList", {
+    partials: {
+      head: "/partials/head"
+    },
+    locals: {
+      todos: todoList,
+      path: req.path,
+      message: null,
+      title: "Todo List"
+    }
+  })
+})
+//todoeach (byId) rendering html
+app.get("/todos/:id", (req, res)=>{
+  const { id }= req.params;
+  const todo = todoList.find(element => element.id == id)
+  if(todo){
+    res.render("todoEach", {
+      locals:{
+        
+        todo: todo
+      }
+    })
+  }else{
+    res.status(400)
+      .send("no todo found") 
+  }
+  
+  
+})
+
+//todoList.html post request
+app.post("/todos", (req,res)=>{
+  if(!req.body || !req.body.todo){
+    res.status(400).render("todoList", {
+      locals: {
+        todos: todoList,
+        path: req.path,
+        message: "please Enter Todo Text",
+        title: "todo no found"
+      },
+      partials: {
+        head: "/partials/head"
+      }
+
+    })
+    return;
+  }
+  const prevId = todoList.reduce((prev, curr) => {
+    return prev > curr.id ? prev : curr.id;
+  }, 0);
+  const newTodo = {
+    id:  prevId + 1,
+    todo: req.body.todo
+  }
+  todoList.push(newTodo);
+  res.status(201).render("todoList", {
+    locals: {
+      todos: todoList,
+      path: req.path,
+      message: "New todo added",
+      title: "todo list"
+    },
+    partials: {
+      head: "/partials/head"
+    }
+  })
+  
+})
+
+//todo delete
+app.delete("/todos/:id", (req, res)=>{
+  const { id } = req.params
+  const findIndex = todoList.findIndex(element=>{  
+    if(element.id == id){
+      return true;
+    }
+    return false
+  })
+  if(findIndex === -1){
+    req.status(404).send("todo not found")
+  }else{
+    todoList.splice(findIndex, 1);
+    res.status(204).redirect("/todos")
+  }
+})
+
+ 
+
+
 // GET /api/todos
 app.get("/api/todos", (req, res)=>{
   res.json(todoList)
@@ -120,3 +227,6 @@ app.delete("/api/todos/:id", (req, res)=>{
 server.listen(port,hostname, function () {
   console.log(`Todo List API is now listening on http://${hostname}:${port}`);
 });
+
+
+
